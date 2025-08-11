@@ -1,0 +1,284 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================
+// ENUMS
+// ========================
+
+// Room types enum
+enum RoomType {
+  STANDARD
+  DELUXE
+  SUITE
+  PRESIDENTIAL
+  FAMILY
+  SINGLE
+  DOUBLE
+  TWIN
+}
+
+// Room availability status
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  OUT_OF_ORDER
+}
+
+// Booking status enum
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  CHECKED_IN
+  CHECKED_OUT
+}
+
+// Payment method enum
+enum PaymentMethod {
+  STRIPE
+  PAYPAL
+  GCASH
+  PAY_ON_CHECKIN
+}
+
+// Payment status enum
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// ========================
+// MODELS
+// ========================
+
+// User model for guests and admins
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String    @default("NO_NAME")
+  email         String    @unique(map: "user_email_idx")
+  emailVerified DateTime? @db.Timestamp(6)
+  image         String?
+  password      String?
+  role          String    @default("guest")
+  paymentMethod String?
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  bookings Booking[]
+  reviews  Review[]
+  accounts Account[] // Social login accounts
+  session  Session[]
+}
+
+// Account model for social login providers
+model Account {
+  userId            String   @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Compound unique constraint - one account per provider per user
+  @@id([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+// Session model
+model Session {
+  sessionToken String   @id
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamp(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Optional: Verification token model for email verification
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@id([identifier, token])
+}
+
+// Room model for hotel rooms
+model Room {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String // Room name/number (e.g., "Presidential Suite 101")
+  type        RoomType
+  description String?    @db.Text
+  price       Decimal    @db.Decimal(10, 2) // Price per night
+  capacity    Int // Maximum number of guests
+  amenities   String[] // Array of amenities (e.g., ["WiFi", "AC", "TV", "Minibar"])
+  status      RoomStatus @default(AVAILABLE)
+  floor       Int? // Floor number
+  roomNumber  String     @unique // Unique room number
+  size        Int? // Room size in square meters
+  bedCount    Int        @default(1)
+  bathCount   Int        @default(1)
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  bookings Booking[]
+  images   RoomImage[]
+
+  // Indexes for performance
+  @@index([type])
+  @@index([status])
+  @@index([price])
+  @@index([capacity])
+  @@index([roomNumber])
+  @@map("rooms")
+}
+
+// Booking model for reservations
+model Booking {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checkInDate        DateTime // Check-in date
+  checkOutDate       DateTime // Check-out date
+  totalAmount        Decimal       @db.Decimal(10, 2) // Total booking amount
+  status             BookingStatus @default(PENDING)
+  specialRequests    String?       @db.Text // Special requests from guest
+  guestCount         Int           @default(1) // Number of guests
+  bookingReference   String        @unique @default(cuid()) // Unique booking reference
+  cancellationReason String?       @db.Text // Reason for cancellation if applicable
+  createdAt          DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime      @updatedAt
+
+  // Foreign keys
+  userId String @db.Uuid
+  roomId String @db.Uuid
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room     Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  payments Payment[]
+  reviews  Review[]
+
+  // Indexes for performance
+  @@index([userId])
+  @@index([roomId])
+  @@index([status])
+  @@index([checkInDate])
+  @@index([checkOutDate])
+  @@index([bookingReference])
+  @@index([createdAt])
+  @@map("bookings")
+}
+
+// Payment model for tracking payments
+model Payment {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  amount          Decimal       @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  stripePaymentId String? // Stripe payment intent ID
+  paypalPaymentId String? // PayPal payment ID
+  gcashPaymentId  String? // GCash payment ID
+  transactionId   String? // General transaction ID
+  failureReason   String? // Reason for payment failure
+  paidAt          DateTime? // When payment was completed
+  refundedAt      DateTime? // When payment was refunded
+  refundAmount    Decimal?      @db.Decimal(10, 2) // Refunded amount
+  currency        String        @default("PHP") // Currency code
+  createdAt       DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime      @updatedAt
+
+  // Foreign keys
+  bookingId String @db.Uuid
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Indexes for performance
+  @@index([bookingId])
+  @@index([status])
+  @@index([paymentMethod])
+  @@index([stripePaymentId])
+  @@index([paypalPaymentId])
+  @@index([gcashPaymentId])
+  @@index([transactionId])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+// Review model for user reviews and ratings
+model Review {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rating    Int // Rating from 1-5
+  comment   String?  @db.Text // Optional review comment
+  isPublic  Boolean  @default(true) // Whether review is public
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  // Foreign keys
+  userId    String @db.Uuid
+  bookingId String @db.Uuid
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Constraints
+  @@unique([userId, bookingId]) // Prevent duplicate reviews
+  // Indexes for performance
+  @@index([userId])
+  @@index([bookingId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+// RoomImage model for room photos
+model RoomImage {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  imageUrl     String // URL to the image
+  isPrimary    Boolean  @default(false) // Whether this is the primary image
+  altText      String? // Alt text for accessibility
+  caption      String? // Image caption
+  displayOrder Int      @default(0) // Order for displaying images
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt
+
+  // Foreign keys
+  roomId String @db.Uuid
+
+  // Relations
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  // Indexes for performance
+  @@index([roomId])
+  @@index([isPrimary])
+  @@index([displayOrder])
+  @@map("room_images")
+}
