@@ -41,6 +41,15 @@ export type BookingDetails = z.infer<typeof BookingDetailsSchema>;
  * 2. User Registration/Login
  ------------------------ */
 
+// Schema for user registration
+export const registerFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export type RegisterFormData = z.infer<typeof registerFormSchema>;
+
 // Schema for signing users in
 export const signInFormSchema = z.object({
   email: z.string().email("Invalid email address"),

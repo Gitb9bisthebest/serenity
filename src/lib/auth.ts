@@ -23,54 +23,65 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (credentials == null) return null;
 
-        // Find user in database
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email as string,
-          },
-        });
+        try {
+          // Find user in database
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email as string,
+            },
+          });
 
-        //  Check if user exist and if the password matches
-        if (user && user.password) {
-          const isMatch = await compare(
-            credentials.password as string,
-            user.password
-          );
+          // Check if user exist and if the password matches
+          if (user && user.password) {
+            const isMatch = await compare(
+              credentials.password as string,
+              user.password
+            );
 
-          // If password matches, return user
-          if (isMatch) {
-            return {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-            };
+            // If password matches, return user
+            if (isMatch) {
+              return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+              };
+            }
           }
-        }
 
-        // If user does not exist or password does not match, return null
-        return null;
+          // If user does not exist or password does not match, return null
+          return null;
+        } catch (error) {
+          console.error("Authorization error:", error);
+          return null;
+        }
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
       }
+
+      // Handle session updates
+      if (trigger === "update" && session) {
+        token.name = session.user?.name;
+        token.email = session.user?.email;
+      }
+
       return token;
     },
-    async session({ session, user, trigger, token }: any) {
-      // Set the user ID from the token
-      session.user.id = token.sub;
-      // Set the user role from the token
-      session.user.role = token.role;
-
-      // If there is an update, set the user name
-      if (trigger === "update") {
-        session.user.name = user.name;
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
       }
-
       return session;
     },
   },

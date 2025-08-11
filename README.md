@@ -1,126 +1,159 @@
-# Serenity Suites - Luxury Staycation Hotel
+# Serenity Hotel
 
-A stunning, modern luxury hotel website built with Next.js, TypeScript, Tailwind CSS, and Framer Motion.
+A modern hotel booking website built with Next.js, TypeScript, and Prisma.
 
 ## Features
 
-- 🏨 **Luxury Design**: Material UI-inspired aesthetic with soft neutral tones
-- 🎬 **Smooth Animations**: Framer Motion powered transitions and parallax effects
-- 📱 **Fully Responsive**: Mobile-first design that works on all devices
-- 🖼️ **Bento Grid Gallery**: Modern Instagram-style image layout
-- 🏠 **Room Showcase**: Interactive carousel with detailed room information
-- ⚡ **Performance Optimized**: Next.js Image optimization and lazy loading
-- 🎨 **TypeScript**: Full type safety throughout the application
-- 🎯 **SEO Optimized**: Meta tags, Open Graph, and structured data
+- **User Authentication**: Secure user registration and login system
+- **Room Booking**: Browse and book hotel rooms
+- **Payment Processing**: Multiple payment methods support
+- **Admin Panel**: Manage bookings, rooms, and users
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
 
-## Tech Stack
+## User Registration System
 
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **UI Components**: shadcn/ui
-- **Icons**: Lucide React
-- **Images**: Next.js Image with Unsplash
+The application includes a complete user registration system with the following features:
+
+### Registration Form (`/register`)
+
+- Full name, email, and password fields
+- Real-time validation using Zod schemas
+- Password hashing with bcrypt
+- Duplicate email checking
+- Automatic sign-in after successful registration
+- Toast notifications for success/error feedback
+- Loading states and form validation
+
+### Security Features
+
+- Password hashing using bcrypt with salt rounds
+- Input validation and sanitization
+- CSRF protection through Next.js server actions
+- Unique email constraints in database
+
+### Database Integration
+
+- Uses Prisma ORM with PostgreSQL
+- User model with role-based access control
+- Automatic UUID generation for user IDs
+- Timestamp tracking for audit purposes
 
 ## Getting Started
 
-1. **Clone the repository**
-   \`\`\`bash
-   git clone <repository-url>
-   cd serenity-suites
-   \`\`\`
+### Prerequisites
 
-2. **Install dependencies**
-   \`\`\`bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   \`\`\`
+- Node.js 18+
+- PostgreSQL database
+- npm or yarn
 
-3. **Run the development server**
-   \`\`\`bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   \`\`\`
+### Installation
 
-4. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd serenity-hotel
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+4. Configure your database URL in `.env.local`:
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/serenity_hotel"
+```
+
+5. Run database migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+6. Seed the database (optional):
+
+```bash
+npm run db:seed
+```
+
+7. Start the development server:
+
+```bash
+npm run dev
+```
+
+### Database Seeding
+
+The application includes sample data for testing:
+
+```bash
+npm run db:seed
+```
+
+This will create:
+
+- Admin user: `admin@example.com` / `password`
+- Guest user: `guest@example.com` / `password`
+
+## API Endpoints
+
+### Authentication
+
+- `POST /api/auth/[...nextauth]` - NextAuth.js authentication
+- `POST /api/auth/register` - User registration (server action)
+
+### User Management
+
+- User registration and login
+- Role-based access control (guest/admin)
+- Session management with JWT
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js with JWT
+- **Password Hashing**: bcrypt
+- **Validation**: Zod schemas
+- **State Management**: React hooks and server actions
 
 ## Project Structure
 
-\`\`\`
-serenity-suites/
-├── app/
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-│   └── ui/
-│       ├── button.tsx
-│       ├── card.tsx
-│       └── badge.tsx
-├── hooks/
-│   └── use-mobile.tsx
-├── lib/
-│   └── utils.ts
-├── types/
-│   └── index.ts
-├── next.config.mjs
-├── tailwind.config.js
-├── tsconfig.json
-└── package.json
-\`\`\`
+```
+src/
+├── app/                 # Next.js app router
+│   ├── (auth)/         # Authentication routes
+│   ├── api/            # API routes
+│   └── globals.css     # Global styles
+├── components/          # React components
+│   ├── auth/           # Authentication components
+│   ├── ui/             # Reusable UI components
+│   └── sections/       # Page sections
+├── lib/                 # Utility functions
+│   ├── actions/        # Server actions
+│   ├── auth.ts         # NextAuth configuration
+│   ├── encrypt.ts      # Password hashing
+│   └── validators.ts   # Zod validation schemas
+└── types/              # TypeScript type definitions
+```
 
-## Key Components
+## Contributing
 
-- **Hero Section**: Full-screen parallax background with elegant typography
-- **About Section**: Split layout with fade-in animations
-- **Gallery**: Bento grid with hover effects and staggered animations
-- **Rooms**: Interactive carousel showcasing luxury suites
-- **Amenities**: Service cards with icon animations
-- **Footer**: Contact information and social links
-
-## Customization
-
-### Colors
-The color scheme uses warm stone and amber tones. Modify the colors in `tailwind.config.js`:
-
-\`\`\`js
-colors: {
-  stone: { /* custom stone palette */ },
-  amber: { /* custom amber palette */ },
-}
-\`\`\`
-
-### Typography
-The site uses system fonts with serif headings. Update font families in `tailwind.config.js`.
-
-### Images
-Replace Unsplash URLs with your own images in the component files.
-
-## Performance
-
-- **Image Optimization**: Next.js Image component with proper sizing
-- **Lazy Loading**: Images load as they enter the viewport
-- **Code Splitting**: Automatic code splitting with Next.js
-- **SEO**: Comprehensive meta tags and Open Graph data
-
-## Deployment
-
-Deploy easily on Vercel:
-
-\`\`\`bash
-npm run build
-\`\`\`
-
-Or deploy to Vercel with one click:
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=<your-repo-url>)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## License
 

@@ -2,14 +2,67 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GoogleIcon, FacebookIcon } from "../ui/social-icon";
+import { registerUser } from "@/lib/actions/user.action";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const formData = new FormData(event.currentTarget);
+
+    try {
+      const result = await registerUser(null, formData);
+
+      if (result.success) {
+        setSuccess(result.message);
+        toast({
+          title: "Success!",
+          description:
+            "Account created successfully. Welcome to Serenity Suites!",
+        });
+
+        // Redirect to home page after successful registration
+        // Use window.location to force a full page refresh and update the UserButton
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        setError(result.message);
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      setError("An unexpected error occurred");
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Card className="w-full max-w-md shadow-2xl border-0">
@@ -26,15 +79,36 @@ export default function RegisterForm() {
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Success/Error Messages */}
+        {success && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Social Login Buttons */}
         <div className="space-y-3">
-          <Button className="w-full bg-white hover:bg-gray-100 border-gray-300 text-gray-700 transition-all duration-200 h-12 rounded-full border-2 hover:text-gray-800">
+          <Button
+            type="button"
+            className="w-full bg-white hover:bg-gray-100 border-gray-300 text-gray-700 transition-all duration-200 h-12 rounded-full border-2 hover:text-gray-800"
+            disabled={isLoading}
+          >
             <span className="mr-3">
               <GoogleIcon />
             </span>
             Continue with Google
           </Button>
-          <Button className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white transition-all duration-200 h-12 rounded-full border-2">
+          <Button
+            type="button"
+            className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white transition-all duration-200 h-12 rounded-full border-2"
+            disabled={isLoading}
+          >
             <span className="mr-3">
               <FacebookIcon />
             </span>
@@ -55,15 +129,16 @@ export default function RegisterForm() {
         </div>
 
         {/* Email Signup Form */}
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
             <input
               type="text"
               name="name"
               placeholder="Full Name"
-              className="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -73,8 +148,9 @@ export default function RegisterForm() {
               type="email"
               name="email"
               placeholder="Email Address"
-              className="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -84,13 +160,15 @@ export default function RegisterForm() {
               type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
-              className="w-full pl-10 pr-12 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-10 pr-12 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
               required
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2"
+              disabled={isLoading}
             >
               {showPassword ? (
                 <EyeOff className="w-5 h-5 text-stone-400" />
@@ -102,9 +180,17 @@ export default function RegisterForm() {
 
           <Button
             type="submit"
-            className="w-full bg-amber-600 text-white py-3 hover:bg-amber-700 rounded-full"
+            className="w-full bg-amber-600 text-white py-3 hover:bg-amber-700 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            disabled={isLoading}
           >
-            Create Account
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
           </Button>
         </form>
 
