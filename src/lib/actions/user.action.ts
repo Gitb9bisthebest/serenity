@@ -16,7 +16,12 @@ export async function registerUser(prevState: unknown, formData: FormData) {
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
+      confirmPassword: formData.get("confirmPassword"),
     });
+
+    const plainPassword = validatedData.password;
+
+    const hashedPassword = await hash(validatedData.password);
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -24,11 +29,11 @@ export async function registerUser(prevState: unknown, formData: FormData) {
     });
 
     if (existingUser) {
-      return { success: false, message: "User with this email already exists" };
+      return {
+        success: false,
+        message: "User with this email already exists",
+      };
     }
-
-    // Hash the password
-    const hashedPassword = await hash(validatedData.password);
 
     // Create the user
     const user = await prisma.user.create({
@@ -44,7 +49,7 @@ export async function registerUser(prevState: unknown, formData: FormData) {
     try {
       const result = await signIn("credentials", {
         email: validatedData.email,
-        password: validatedData.password,
+        password: plainPassword,
         redirect: false,
       });
 

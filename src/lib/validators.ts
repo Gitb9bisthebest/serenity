@@ -1,9 +1,7 @@
 import { z } from "zod";
-import { isBefore, isFuture } from "date-fns";
+import { isBefore } from "date-fns";
 
-/** ----------------------
- * 1. Booking Validation
- ------------------------ */
+// Schema for booking details
 export const BookingDetailsSchema = z
   .object({
     checkInDate: z.date({
@@ -37,16 +35,18 @@ export const BookingDetailsSchema = z
 
 export type BookingDetails = z.infer<typeof BookingDetailsSchema>;
 
-/** ----------------------
- * 2. User Registration/Login
- ------------------------ */
-
 // Schema for user registration
-export const registerFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+export const registerFormSchema = z
+  .object({
+    name: z.string().min(3, "Name must be at least 3 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Passwords do not match"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export type RegisterFormData = z.infer<typeof registerFormSchema>;
 
@@ -56,9 +56,7 @@ export const signInFormSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-/** ----------------------
- * 3. Room Creation/Update
- ------------------------ */
+// Schema for room details
 export const RoomSchema = z.object({
   title: z.string().min(3, "Room title is required"),
   description: z.string().min(10, "Description is too short"),
@@ -71,9 +69,7 @@ export const RoomSchema = z.object({
 
 export type RoomDetails = z.infer<typeof RoomSchema>;
 
-/** ----------------------
- * 4. Payment Processing
- ------------------------ */
+// Schema for payment processing
 export const PaymentSchema = z.object({
   bookingId: z.string().uuid("Invalid booking ID"),
   amount: z.number().positive("Amount must be a positive number"),
@@ -84,9 +80,7 @@ export const PaymentSchema = z.object({
 
 export type PaymentDetails = z.infer<typeof PaymentSchema>;
 
-/** ----------------------
- * 5. Review Submission
- ------------------------ */
+// Schema for room reviews
 export const ReviewSchema = z.object({
   bookingId: z.string().uuid("Invalid booking ID"),
   rating: z
@@ -98,9 +92,7 @@ export const ReviewSchema = z.object({
 
 export type ReviewDetails = z.infer<typeof ReviewSchema>;
 
-/** ----------------------
- * 6. Admin Operations (Basic Example)
- ------------------------ */
+// Schema for admin actions
 export const AdminActionSchema = z.object({
   action: z.enum(["approveBooking", "cancelBooking", "featureRoom"]),
   targetId: z.string().uuid("Invalid target ID"),
@@ -108,9 +100,7 @@ export const AdminActionSchema = z.object({
 
 export type AdminAction = z.infer<typeof AdminActionSchema>;
 
-/** ----------------------
- * 7. Query Parameters (for Filtering/Pagination)
- ------------------------ */
+// Schema for query parameters
 export const QueryParamsSchema = z.object({
   page: z
     .string()

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { GoogleIcon, FacebookIcon } from "../ui/social-icon";
 import { registerUser } from "@/lib/actions/user.action";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -22,41 +23,53 @@ export default function RegisterForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    setError(null);
-    setSuccess(null);
+    setError("");
+    setSuccess("");
 
     const formData = new FormData(event.currentTarget);
 
     try {
+      const password = formData.get("password") as string;
+      const confirmPassword = formData.get("confirmPassword") as string;
+
+      // Validation before sending to bakcend
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        toast({
+          title: "Validation Error",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const result = await registerUser(null, formData);
 
       if (result.success) {
         setSuccess(result.message);
         toast({
           title: "Success!",
-          description:
-            "Account created successfully. Welcome to Serenity Suites!",
+          description: result.message,
         });
 
-        // Redirect to home page after successful registration
-        // Use window.location to force a full page refresh and update the UserButton
         setTimeout(() => {
           window.location.href = "/";
         }, 1500);
       } else {
         setError(result.message);
         toast({
-          title: "Error",
+          title: "Registration Failed",
           description: result.message,
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Registration error:", error);
-      setError("An unexpected error occurred");
+      const errorMessage = "An unexpected error occurred. Please try again.";
+
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -129,6 +142,7 @@ export default function RegisterForm() {
         </div>
 
         {/* Email Signup Form */}
+        {/* Full Name */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
@@ -137,11 +151,11 @@ export default function RegisterForm() {
               name="name"
               placeholder="Full Name"
               className="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-              required
               disabled={isLoading}
             />
           </div>
 
+          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
             <input
@@ -149,11 +163,11 @@ export default function RegisterForm() {
               name="email"
               placeholder="Email Address"
               className="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-              required
               disabled={isLoading}
             />
           </div>
 
+          {/* Password */}
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
             <input
@@ -161,7 +175,6 @@ export default function RegisterForm() {
               name="password"
               placeholder="Password"
               className="w-full pl-10 pr-12 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-              required
               disabled={isLoading}
             />
             <button
@@ -171,6 +184,30 @@ export default function RegisterForm() {
               disabled={isLoading}
             >
               {showPassword ? (
+                <EyeOff className="w-5 h-5 text-stone-400" />
+              ) : (
+                <Eye className="w-5 h-5 text-stone-400" />
+              )}
+            </button>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="relative mt-4">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              className="w-full pl-10 pr-12 py-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+              disabled={isLoading}
+            >
+              {showConfirmPassword ? (
                 <EyeOff className="w-5 h-5 text-stone-400" />
               ) : (
                 <Eye className="w-5 h-5 text-stone-400" />
