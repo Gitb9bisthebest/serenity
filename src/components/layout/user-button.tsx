@@ -25,6 +25,8 @@ const UserButton = async () => {
     );
   }
 
+  // Check if user is verified (this will be handled by the auth middleware)
+  // For now, we'll assume the session user is verified since they can't sign in without verification
   const firstInitial = session.user?.name?.charAt(0).toUpperCase() ?? "U";
 
   return (

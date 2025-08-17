@@ -74,6 +74,7 @@ model User {
   password      String?
   role          String    @default("guest")
   paymentMethod String?
+  verified      Boolean   @default(false)
   createdAt     DateTime  @default(now()) @db.Timestamp(6)
   updatedAt     DateTime  @updatedAt
 
@@ -82,6 +83,7 @@ model User {
   reviews  Review[]
   accounts Account[] // Social login accounts
   session  Session[]
+  otps     Otp[]
 }
 
 // Account model for social login providers
@@ -281,4 +283,27 @@ model RoomImage {
   @@index([isPrimary])
   @@index([displayOrder])
   @@map("room_images")
+}
+
+// OTP model for email verification
+model Otp {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @db.VarChar(6)
+  email     String
+  type      String   @default("REGISTRATION") // REGISTRATION, PASSWORD_RESET, etc.
+  expiresAt DateTime @db.Timestamp(6)
+  used      Boolean  @default(false)
+  userId    String?  @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes for performance
+  @@index([email])
+  @@index([code])
+  @@index([expiresAt])
+  @@index([used])
+  @@index([userId])
+  @@map("otps")
 }
