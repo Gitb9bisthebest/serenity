@@ -1,10 +1,9 @@
-import { Navigation } from "./navigation";
-import UserButton from "./user-button";
+import Navigation from "./navigation";
 
 export default function Header() {
   return (
     <header>
-      <Navigation userButton={<UserButton />} />
+      <Navigation />
     </header>
   );
 }

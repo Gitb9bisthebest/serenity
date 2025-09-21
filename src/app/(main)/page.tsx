@@ -9,7 +9,6 @@ import { WhyStaySection } from "@/components/sections/why-stay-section";
 import { ParallaxSection } from "@/components/sections/parallax-section";
 import { LocationHighlightsSection } from "@/components/sections/location-highlights-section";
 import { BookingSection } from "@/components/sections/booking-section";
-import Header from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
 export default function StaycationHotel() {
@@ -18,7 +17,6 @@ export default function StaycationHotel() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Header />
       <HeroSection y={y} />
       <AboutSection />
       <GallerySection />

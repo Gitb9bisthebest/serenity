@@ -6,8 +6,8 @@ import { compare } from "@/lib/encrypt";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/",
+    error: "/",
   },
   session: {
     strategy: "jwt" as const,

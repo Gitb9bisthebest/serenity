@@ -54,7 +54,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  generator: "v0.dev",
 };
 
 export default function RootLayout({
@@ -66,7 +65,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={poppins.variable}>
       <body className="font-poppins antialiased">
         {children}
-
         <Toaster />
       </body>
     </html>
